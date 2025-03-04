@@ -1,8 +1,8 @@
 #let get-language-index(lang)={
-  if lang == "en"{0}
-  else if lang == "de"{1}
+  if lang == "en"{1}
+  else if lang == "de"{0}
   else if lang == "fr"{2}
-  else{0}
+  else{1}
 }
 
 #let database = state("hp-statements", csv("resources/hp-statements.tsv", delimiter: "\t", row-type: dictionary))
@@ -74,35 +74,35 @@
   }
 }
 
-#let h-statement(statement, variant: auto, parameters: (), onlystatement:false, validate: true)={
+#let h-statement(statement, variant: auto, parameters: (), only-statement:false, validate: true)={
   if validate{
    statement = validate-statement(statement, "H")
   }
   
   let full-statement = get-statement(statement, variant, parameters)
 
-  if onlystatement{
+  if only-statement{
     return full-statement
   }else{
     return statement +": "+ full-statement
   }
 }
 
-#let p-statement(statement, variant: auto, parameters: (), onlystatement:false, validate: true)={
+#let p-statement(statement, variant: auto, parameters: (), only-statement:false, validate: true)={
   if validate{
    statement = validate-statement(statement, "P")
   }
   
   let full-statement = get-statement(statement, variant, parameters)
 
-  if onlystatement{
+  if only-statement{
     return full-statement
   }else{
     return statement +": "+ full-statement
   }
 }
 
-#let hp(statement, variant: auto, parameters: (), onlystatement:false, validate: true)= p-statement(statement, variant:variant, parameters:parameters, onlystatement:onlystatement, validate:validate)
+#let hp(statement, variant: auto, parameters: (), only-statement:false, validate: true)= p-statement(statement, variant:variant, parameters:parameters, only-statement:only-statement, validate:validate)
 
 #let split-statements(statements, validate: true)={
   statements = if type(statements) == str{
@@ -117,10 +117,10 @@
   }
 }
 
-#let display-statements(statements, onlystatement:false, validate: true)={
+#let display-statements(statements, only-statement:false, validate: true)={
   statements = split-statements(statements, validate:validate)
   for value in statements {
-    hp(value, onlystatement:onlystatement, validate:validate)
+    hp(value, only-statement:only-statement, validate:validate)
     linebreak()
   }
 }

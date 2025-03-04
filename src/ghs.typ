@@ -25,7 +25,7 @@
   height:auto,
   fit: "cover",
 )={
-  let index = calc.clamp(_validate-index(icon), 1, 9)
+  let index = calc.clamp(validate-index(icon), 1, 9)
   
   image("resources/ghs-pictograms/GHS0" + str(index) + ".svg", height: height, width: width, alt: ghs-info.at("GHS0"+ str(index)).name + " sign", fit: fit)
 }
