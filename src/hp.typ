@@ -2,6 +2,7 @@
   if lang == "en"{1}
   else if lang == "de"{0}
   else if lang == "fr"{2}
+  else if lang == "it"{3} 
   else{1}
 }
 
