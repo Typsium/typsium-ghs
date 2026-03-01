@@ -33,7 +33,7 @@
     }
 }
 
-#let get-statement(statement, variant, parameters, default: x=> "no statement found: " + repr(x))={
+#let get-statement(statement, variant, parameters, only-statement, as-hover,default: x=> "no statement found: " + repr(x))={
   let x = parameters.len()
   let parameterlen = if type(parameters) == str{
     "-1"
@@ -70,40 +70,61 @@
         .replace("{2}", parameters.at(1, default: "…"))
       }
     }
-    
+
+    if not only-statement{
+      full-statement = statement +": "+ full-statement
+    }
+
+    if as-hover{
+      return link(full-statement.replace(" ", "_"), statement)
+    }
     return full-statement
   }
 }
 
-#let h-statement(statement, variant: auto, parameters: (), only-statement:false, validate: true)={
+/// 
+/// Displays a hazard statement.
+/// - statement (): the code of the statement to display
+/// - variant (): selects which variant to display. only applicable for some statements
+/// - parameters (): additional parameters can manually be added and are filled into the hp-statements based on the order they appear in
+/// - only-statement (bool): should the code of the statement be displayed
+/// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
+/// - validate (): only change this if you are a plugin developer and know you can skip validation
+/// -> content
+#let h-statement(statement, variant: auto, parameters: (), only-statement:false, as-hover:false, validate: true)={
   if validate{
    statement = validate-statement(statement, "H")
   }
   
-  let full-statement = get-statement(statement, variant, parameters)
-
-  if only-statement{
-    return full-statement
-  }else{
-    return statement +": "+ full-statement
-  }
+  return get-statement(statement, variant, parameters, only-statement, as-hover)
 }
 
-#let p-statement(statement, variant: auto, parameters: (), only-statement:false, validate: true)={
+/// 
+/// Displays a precautionary statement.
+/// - statement (): the code of the statement to display
+/// - variant (): selects which variant to display. only applicable for some statements
+/// - parameters (): additional parameters can manually be added and are filled into the hp-statements based on the order they appear in
+/// - only-statement (bool): should the code of the statement be displayed
+/// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
+/// - validate (): only change this if you are a plugin developer and know you can skip validation
+/// -> content
+#let p-statement(statement, variant: auto, parameters: (), only-statement:false,as-hover:false,  validate: true)={
   if validate{
    statement = validate-statement(statement, "P")
   }
-  
-  let full-statement = get-statement(statement, variant, parameters)
 
-  if only-statement{
-    return full-statement
-  }else{
-    return statement +": "+ full-statement
-  }
+  return get-statement(statement, variant, parameters, only-statement, as-hover)
 }
-
-#let hp(statement, variant: auto, parameters: (), only-statement:false, validate: true)= p-statement(statement, variant:variant, parameters:parameters, only-statement:only-statement, validate:validate)
+/// 
+/// Displays a hazard or precautionary statement. The type is inferred from if the code contains an H or a P. if integers are provided it defaults to precautionary statements
+/// - statement (): the code of the statement to display
+/// - variant (): selects which variant to display. only applicable for some statements
+/// - parameters (): additional parameters can manually be added and are filled into the hp-statements based on the order they appear in
+/// - only-statement (bool): should the code of the statement be displayed
+/// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
+/// - validate (): only change this if you are a plugin developer and know you can skip validation
+/// -> content
+#let hp(statement, variant: auto, parameters: (), only-statement:false,as-hover:false,  validate: true)= p-statement(statement, variant:variant, parameters:parameters, only-statement:only-statement, as-hover: as-hover, validate:validate)
 
 #let split-statements(statements, validate: true)={
   statements = if type(statements) == str{
@@ -118,10 +139,17 @@
   }
 }
 
-#let display-statements(statements, only-statement:false, validate: true)={
+/// 
+/// Displays multiple hazard and precautionary statements
+/// - statements (str|array): a list of statement codes to display.
+/// - only-statement (bool): should the code of the statement be displayed
+/// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
+/// - validate (bool): only change this if you are a plugin developer and know you can skip validation
+/// -> content
+#let display-statements(statements, only-statement:false, as-hover:false, validate: true)={
   statements = split-statements(statements, validate:validate)
   for value in statements {
-    hp(value, only-statement:only-statement, validate:validate)
+    hp(value, only-statement:only-statement,as-hover:as-hover, validate:validate)
     linebreak()
   }
 }
