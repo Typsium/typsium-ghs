@@ -1,6 +1,6 @@
 [package]
 name = "typsium-ghs"
-version = "0.1.1"
+version = "0.1.2"
 repository = "https://github.com/Typsium/typsium-ghs"
 license = "MIT"
 entrypoint = "src/lib.typ"
