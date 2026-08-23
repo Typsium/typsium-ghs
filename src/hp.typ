@@ -35,58 +35,65 @@
   parameters,
   only-statement,
   as-hover,
+  hide-parameter-directions: true,
   default: x => "no statement found: " + repr(x),
 ) = {
   let x = parameters.len()
   let parameterlen = if type(parameters) == str {
     "-1"
   } else {
-    if parameters.len() > 0 { "-" + str(parameters.len()) } else { "" }
+    if parameters.len() > 0 or hide-parameter-directions { "-" + str(parameters.len()) } else { "" }
   }
 
-  context {
-    let lang-index = get-language-index(text.lang)
-    let db = database.get().at(lang-index)
-    let full-statement
-    if variant != auto {
-      let variant = "." + str(variant)
-      full-statement = db.at(statement + variant + parameterlen, default: db.at(statement + variant, default: db.at(
-        statement,
-        default: none,
-      )))
-    } else {
-      full-statement = db.at(statement + parameterlen, default: db.at(statement, default: none))
-    }
-
-    if full-statement == none {
-      if statement.contains("+") {
-        full-statement = statement.split("+").map(x => db.at(x, default: "") + " ").sum()
-      }
-    }
-
-    if full-statement == none {
-      full-statement = default(statement)
-    }
-
-    if type(full-statement) == str {
-      if type(parameters) == str {
-        full-statement = full-statement.replace("{1}", parameters)
-      } else if type(parameters) == array {
-        full-statement = full-statement
-          .replace("{1}", parameters.at(0, default: "…"))
-          .replace("{2}", parameters.at(1, default: "…"))
-      }
-    }
-
-    if not only-statement {
-      full-statement = statement + ": " + full-statement
-    }
-
-    if as-hover {
-      return link(full-statement.replace(" ", "_"), statement)
-    }
-    return full-statement
+  let lang-index = get-language-index(text.lang)
+  let db = database.get().at(lang-index)
+  let full-statement
+  if variant != auto {
+    let variant = "." + str(variant)
+    full-statement = db.at(statement + variant + parameterlen, default: db.at(statement + variant, default: db.at(
+      statement,
+      default: none,
+    )))
+  } else {
+    full-statement = db.at(statement + parameterlen, default: db.at(statement, default: none))
   }
+
+  if full-statement == none and statement.contains("+") {
+    let statements = statement.split("+")
+    full-statement = statements
+      .map(x => get-statement(
+        x,
+        variant,
+        parameters,
+        true,
+        false,
+        hide-parameter-directions: hide-parameter-directions,
+      ))
+      .join(" ")
+  }
+
+  if full-statement == none {
+    full-statement = default(statement)
+  }
+
+  if type(full-statement) == str {
+    if type(parameters) == str {
+      full-statement = full-statement.replace("{1}", parameters)
+    } else if type(parameters) == array {
+      full-statement = full-statement
+        .replace("{1}", parameters.at(0, default: "…"))
+        .replace("{2}", parameters.at(1, default: "…"))
+    }
+  }
+
+  if not only-statement {
+    full-statement = statement + ": " + full-statement
+  }
+
+  if as-hover {
+    return link(full-statement.replace(" ", "_").replace("…", "..."), statement)
+  }
+  return full-statement
 }
 
 ///
@@ -98,12 +105,29 @@
 /// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
 /// - validate (): only change this if you are a plugin developer and know you can skip validation
 /// -> content
-#let h-statement(statement, variant: auto, parameters: (), only-statement: false, as-hover: false, validate: true) = {
+#let h-statement(
+  statement,
+  variant: auto,
+  parameters: (),
+  only-statement: false,
+  as-hover: false,
+  hide-parameter-directions: true,
+  validate: true,
+) = {
   if validate {
     statement = validate-statement(statement, "H")
   }
 
-  return get-statement(statement, variant, parameters, only-statement, as-hover)
+  return context {
+    get-statement(
+      statement,
+      variant,
+      parameters,
+      only-statement,
+      as-hover,
+      hide-parameter-directions: hide-parameter-directions,
+    )
+  }
 }
 
 ///
@@ -115,12 +139,29 @@
 /// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
 /// - validate (): only change this if you are a plugin developer and know you can skip validation
 /// -> content
-#let p-statement(statement, variant: auto, parameters: (), only-statement: false, as-hover: false, validate: true) = {
+#let p-statement(
+  statement,
+  variant: auto,
+  parameters: (),
+  only-statement: false,
+  as-hover: false,
+  hide-parameter-directions: true,
+  validate: true,
+) = {
   if validate {
     statement = validate-statement(statement, "P")
   }
 
-  return get-statement(statement, variant, parameters, only-statement, as-hover)
+  return context {
+    get-statement(
+      statement,
+      variant,
+      parameters,
+      only-statement,
+      as-hover,
+      hide-parameter-directions: hide-parameter-directions,
+    )
+  }
 }
 ///
 /// Displays a hazard or precautionary statement. The type is inferred from if the code contains an H or a P. if integers are provided it defaults to precautionary statements
@@ -131,16 +172,27 @@
 /// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
 /// - validate (): only change this if you are a plugin developer and know you can skip validation
 /// -> content
-#let hp(statement, variant: auto, parameters: (), only-statement: false, as-hover: false, validate: true) = p-statement(
+#let hp(
+  statement,
+  variant: auto,
+  parameters: (),
+  only-statement: false,
+  as-hover: false,
+  hide-parameter-directions: true,
+  validate: true,
+) = p-statement(
   statement,
   variant: variant,
   parameters: parameters,
   only-statement: only-statement,
   as-hover: as-hover,
   validate: validate,
+  hide-parameter-directions: hide-parameter-directions,
 )
 
 #let ph-regex = regex("\b([hHpP]?[0-9]{3})(?:\s*\+\s*([hHpP]?[0-9]{3}))*\b")
+#let ph-regex-no-whitespace = regex("\b([hHpP][0-9]{3})(?:\s*\+\s*([hHpP][0-9]{3}))*\b")
+
 #let split-statements(statements, h: auto, p: auto, validate: true) = {
   statements = if type(statements) == str {
     statements.matches(ph-regex).map(x => x.text)
@@ -176,10 +228,40 @@
 /// - as-hover (bool): Will display statements only as their code, but provides the full statement inside a link so it is shown when hovering over it. May not work in all PDF viewers
 /// - validate (bool): only change this if you are a plugin developer and know you can skip validation
 /// -> content
-#let display-statements(statements, h: auto, p: auto, only-statement: false, as-hover: false, validate: true) = {
+#let display-statements(
+  statements,
+  h: auto,
+  p: auto,
+  only-statement: false,
+  as-hover: false,
+  hide-parameter-directions: true,
+
+  validate: true,
+) = {
   statements = split-statements(statements, h: h, p: p, validate: validate)
   for value in statements {
-    hp(value, only-statement: only-statement, as-hover: as-hover, validate: validate)
+    hp(
+      value,
+      only-statement: only-statement,
+      as-hover: as-hover,
+      validate: validate,
+      hide-parameter-directions: hide-parameter-directions,
+    )
     linebreak()
   }
+}
+
+#let show-hp(
+  body,
+  only-statement: true,
+  as-hover: true,
+  hide-parameter-directions: true,
+) = {
+  show ph-regex-no-whitespace: it => hp(
+    it.text,
+    only-statement: only-statement,
+    as-hover: as-hover,
+    hide-parameter-directions: hide-parameter-directions,
+  )
+  body
 }

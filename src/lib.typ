@@ -1,2 +1,2 @@
 #import "ghs.typ": ghs, ghs-info
-#import "hp.typ": h-statement, p-statement, hp, split-statements, display-statements   
+#import "hp.typ": display-statements, h-statement, hp, p-statement, show-hp, split-statements
