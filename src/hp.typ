@@ -238,7 +238,7 @@
 
   validate: true,
 ) = {
-  statements = split-statements(statements, h: h, p: p, validate: validate)
+  statements = split-statements(statements, h: h, p: p, validate: validate).dedup()
   for value in statements {
     hp(
       value,
